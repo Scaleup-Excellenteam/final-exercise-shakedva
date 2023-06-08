@@ -13,20 +13,19 @@ class GptPptxExplainer:
     """
 
     @classmethod
-    async def explain(cls, file_path):
+    async def explain(cls, input_file_path, output_dir):
         """
         Receives a path to a pptx file, connects to OpenAi asynchronously and receives the explanation to each slide.
         Creates a json file with the explanation of the presentation.
-        :param file_path: str path to a pptx file
+        :param input_file_path: str path to a pptx file
         """
-        base_file_name = os.path.basename(file_path)
         tasks = []
         gpt_outputs = []
         # Parse the presentation
-        for index, slide_text in PptxParser.parse(file_path):
+        for index, slide_text in PptxParser.parse(input_file_path):
             prompt_content = {
                 'slide_index': index,
-                'file_title': base_file_name,
+                'file_title': input_file_path.name,
                 'slide_text': slide_text
             }
             # save the openai explanation results
@@ -35,10 +34,10 @@ class GptPptxExplainer:
             )
         await asyncio.gather(*tasks)
         # save the results in json
-        with open(f'{os.path.splitext(file_path)[0]}_explained.json', 'w') as f:
+        with open(output_dir / input_file_path.with_suffix('.json').name, 'w') as f:
             f.write(json.dumps(gpt_outputs))
 
-
-if __name__ == "__main__":
-    file_path = input("Enter a pptx file path: ")
-    asyncio.run(GptPptxExplainer.explain(file_path))
+#
+# if __name__ == "__main__":
+#     file_path = input("Enter a pptx file path: ")
+#     asyncio.run(GptPptxExplainer.explain(file_path))

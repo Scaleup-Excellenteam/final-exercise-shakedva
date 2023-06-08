@@ -9,24 +9,31 @@ class GptExplainerChecker:
     def __init__(self):
         self.processed_uids = set()
 
-    def run(self):
-        while (True):
-            for uid_dir in Path(args.target_dir).iterdir():
-                if uid_dir not in self.processed_uids:
-                    self.processed_uids.add(uid_dir)
-                    file_path = next(uid_dir.glob("*.pptx"))  # todo make sure it has a pptx file
-                    asyncio.run(GptPptxExplainer.explain(file_path))
+    def run(self, input_dir: str, output_dir: str):
+        input_dir_path = Path(input_dir)
+        output_dir_path = Path(output_dir)
+        while True:
+            for file in input_dir_path.iterdir():
+                if file.stem not in self.processed_uids:
+                    self.processed_uids.add(file.stem)
+                    asyncio.run(GptPptxExplainer.explain(file.absolute(), output_dir_path))
             time.sleep(30)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--target-dir",
+        "--input-dir",
         type=str,
         help="Directory to scan for new pptx files to run GptExplainer on",
-        default='upload'
+        default='uploads'
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        help="Directory to save explained pptx files",
+        default='outputs'
     )
     args = parser.parse_args()
     checker = GptExplainerChecker()
-    checker.run()
+    checker.run(args.input_dir, args.output_dir)

@@ -6,11 +6,13 @@ from datetime import datetime
 from pathlib import Path
 from enum import Enum
 import json
-UPLOAD_DIR_NAME = "upload"
+UPLOAD_DIR_NAME = "uploads"
+OUTPUT_DIR_NAME = "outputs"
 ALLOWED_EXTENSIONS = {'pptx'}
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER_PATH'] = Path(Path.cwd() / UPLOAD_DIR_NAME)
+app.config['OUTPUT_FOLDER_PATH'] = Path(Path.cwd() / OUTPUT_DIR_NAME)
 
 
 def allowed_file(filename: str):
@@ -19,9 +21,7 @@ def allowed_file(filename: str):
 
 
 def save_file(file, file_name, uid):
-    directory_path = app.config['UPLOAD_FOLDER_PATH'] / uid
-    directory_path.mkdir(exist_ok=True)
-
+    directory_path = app.config['UPLOAD_FOLDER_PATH']
     data = (datetime.now().strftime('%Y-%m-%d-%H-%M-%S'), uid, file_name)
     file_name = '_'.join(data)
     file.save(directory_path / file_name)
@@ -54,23 +54,22 @@ def status(uid):
     response = {
         'explanation': None
     }
+    input_dir_path = app.config['UPLOAD_FOLDER_PATH']
+    input_file_path = next(input_dir_path.glob(f"*{uid}*.pptx"), None)
+    if not input_file_path:
+        response['status'] = Status.NOT_FOUND
+    else:
+        timestamp, _, original_file_name = input_file_path.name.split('_', 2)
+        response['filename'] = original_file_name
+        response['timestamp'] = timestamp
+        output_dir_path = app.config['OUTPUT_FOLDER_PATH']
 
-    output_dir = app.config['UPLOAD_FOLDER_PATH'] / uid
-    if output_dir.is_dir():
-        output_dir_files = list(output_dir.glob("*.json"))
-
-        if output_dir_files:
+        output_file_path = next(output_dir_path.glob(f"*{uid}*.json"), None)
+        if output_file_path:
             response['status'] = Status.DONE
-            with open(output_dir_files[0], 'r') as f:
+            with open(output_file_path, 'r') as f:
                 response['explanation'] = json.loads(f.read())
         else:
             response['status'] = Status.PENDING
 
-        file_name = next(output_dir.glob("*.pptx"))
-        if file_name:
-            timestamp, _, original_file_name = file_name.name.split('_', 2)
-            response['filename'] = original_file_name
-            response['timestamp'] = timestamp
-    else:
-        response['status'] = Status.NOT_FOUND
     return jsonify(response)
