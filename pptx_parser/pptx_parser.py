@@ -1,6 +1,7 @@
 from pptx import Presentation
 
 
+
 class PptxParser:
     """
     Parsing a pptx file and yield the slide's text and index number.

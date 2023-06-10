@@ -1,9 +1,8 @@
 import asyncio
 import json
-import os
 
-from openai_api import OpenaiApi
-from pptx_parser import PptxParser
+from openai_api.openai_api import OpenaiApi
+from pptx_parser.pptx_parser import PptxParser
 
 
 class GptPptxExplainer:
@@ -28,7 +27,7 @@ class GptPptxExplainer:
                 'file_title': input_file_path.name,
                 'slide_text': slide_text
             }
-            # save the openai explanation results
+            # save the openai_api explanation results
             tasks.append(
                 OpenaiApi.get_model_response(gpt_outputs, prompt_content)
             )
