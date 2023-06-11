@@ -1,0 +1,9 @@
+.idea/
+*.json
+__pycache__/
+.venv
+uploads/
+outputs/
+*.log
+project_stage_2.md
+.pytest_cache/
