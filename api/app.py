@@ -13,14 +13,22 @@ app = Flask(__name__)
 app.config[APP_UPLOADS_DIR_KEY] = Path(Path.cwd() / "uploads")
 app.config[APP_OUTPUTS_DIR_KEY] = Path(Path.cwd() / "outputs")
 
+NO_FILE_MSG = "No file"
+EMPTY_FILE_MSG = "file is empty"
+FILE_KEY = 'file'
 
 @app.route('/upload', methods=['POST'])
 def upload():
-    if 'file' not in request.files:
-        return "No file"
-    file = request.files['file']
+    """
+    Handles user request to upload new file.
+    The file is saved in a specific directory in a format of timestamp-uid-filename.pptx.
+    :return: JSON object with the uid.
+    """
+    if FILE_KEY not in request.files:
+        return NO_FILE_MSG
+    file = request.files[FILE_KEY]
     if file.filename == '':
-        return "file is empty"
+        return EMPTY_FILE_MSG
 
     if file and allowed_file(file.filename):
         file_name = secure_filename(file.filename)
@@ -31,6 +39,11 @@ def upload():
 
 @app.route('/uid/<uid>', methods=['GET'])
 def status(uid):
+    """
+     Handles user request to receive the status of the output.
+    :param uid: str unique id the user got when uploading a file.
+    :return: JSON with all the information about the output.
+    """
     response = {
         'explanation': None
     }
@@ -43,6 +56,7 @@ def status(uid):
         response['filename'] = original_file_name
         response['timestamp'] = timestamp
 
+        # check if there is output file
         output_file_path = next(app.config[APP_OUTPUTS_DIR_KEY].glob(f"*{uid}*.json"), None)
         if output_file_path:
             response['status'] = RequestStatusEnum.DONE

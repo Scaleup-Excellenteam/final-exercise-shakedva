@@ -8,6 +8,7 @@ import time
 
 URL = "http://localhost:5000"
 FILE_NAME = "sample_presentation.pptx"
+SLEEP_DURATION = 200
 
 
 @pytest.fixture(scope='session')
@@ -44,7 +45,7 @@ def test_system(server_process, checker_process):
     time.sleep(3)
     s = client.status(uid)
     assert s.status == RequestStatusEnum.PENDING
-    time.sleep(200)
+    time.sleep(SLEEP_DURATION)
     s = client.status(uid)
     assert s.is_done
 

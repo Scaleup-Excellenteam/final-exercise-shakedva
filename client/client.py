@@ -1,14 +1,25 @@
-import argparse
 import requests
 from .status import Status
 
 
 class Client:
+    """
+    Makes requests for the app
+    """
+
     def __init__(self, url: str) -> None:
+        """
+        :param url: make requests to the url
+        """
         self.url = url
 
     def upload(self, file_path: str) -> str:
-        print(file_path)
+        """
+        Make a request to upload a file to the app.
+        :param file_path: to a pptx file to upload.
+        :return: UID from the response.
+        :raise Exception: status code - when the response contains error code.
+        """
         with open(file_path, 'rb') as f:
             response = requests.post(
                 f"{self.url}/upload",
@@ -19,6 +30,12 @@ class Client:
         raise Exception(response.status_code)
 
     def status(self, uid: str) -> Status:
+        """
+        Make a request to receive the status of the output
+        :param uid: str the uid received in the upload request
+        :return: Status of the output
+        :raise Exception: when the response contained error
+        """
         response = requests.get(
             f"{self.url}/uid/{uid}"
         )
@@ -33,23 +50,3 @@ class Client:
             if status.not_found:
                 raise Exception("UID not found")
             return status
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--url",
-        type=str,
-        help="API server url",
-        default='http://localhost:5000'
-    )
-    args = parser.parse_args()
-    client = Client(args.url)
-
-    pptx_file_path = "C:\\Users\\shake\\Desktop\\College\\4th Year\\Semester B\\Excellenteam\\python\\Ex\\Tests.pptx"
-    uid = client.upload(pptx_file_path)
-    client.status(uid)
-
-
-if __name__ == '__main__':
-    main()

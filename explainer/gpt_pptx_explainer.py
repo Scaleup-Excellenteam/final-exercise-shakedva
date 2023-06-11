@@ -35,8 +35,3 @@ class GptPptxExplainer:
         # save the results in json
         with open(output_dir / input_file_path.with_suffix('.json').name, 'w') as f:
             f.write(json.dumps(gpt_outputs))
-
-#
-# if __name__ == "__main__":
-#     file_path = input("Enter a pptx file path: ")
-#     asyncio.run(GptPptxExplainer.explain(file_path))
