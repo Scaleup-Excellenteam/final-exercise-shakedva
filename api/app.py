@@ -52,3 +52,7 @@ def status(uid):
             response['status'] = RequestStatusEnum.PENDING
 
     return jsonify(response)
+
+
+if __name__ == "__main__":
+    app.run()

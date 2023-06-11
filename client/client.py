@@ -1,9 +1,6 @@
 import argparse
-import sys
-import time
-
 import requests
-from status import Status
+from .status import Status
 
 
 class Client:
@@ -11,6 +8,7 @@ class Client:
         self.url = url
 
     def upload(self, file_path: str) -> str:
+        print(file_path)
         with open(file_path, 'rb') as f:
             response = requests.post(
                 f"{self.url}/upload",
