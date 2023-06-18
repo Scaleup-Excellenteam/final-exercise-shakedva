@@ -5,5 +5,7 @@ __pycache__/
 uploads/
 outputs/
 *.log
-project_stage_2.md
 .pytest_cache/
+GPT-explainer-1.md
+GPT-explainer-2-2.md
+*.db
