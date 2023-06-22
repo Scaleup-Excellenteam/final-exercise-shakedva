@@ -1,11 +1,16 @@
 import uuid
-
+import time
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import ForeignKey
+from sqlalchemy import CheckConstraint
+from api.request_status_enum import RequestStatusEnum
+import sqlalchemy  # import Enum
+from sqlalchemy import delete
+from contextlib import contextmanager
 
 from typing import List
 from sqlalchemy import Integer, String, UUID, DateTime
@@ -20,9 +25,8 @@ class Base(DeclarativeBase):
 class User(Base):
     __tablename__ = "user"
     id = mapped_column(Integer, primary_key=True)
-    email = mapped_column(String)
+    email = mapped_column(String, nullable=False)  # todo: , unique=True
 
-    # todo?
     uploads: Mapped[List["Upload"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
@@ -36,32 +40,39 @@ class Upload(Base):
 
     id = mapped_column(Integer, primary_key=True)
     uid = mapped_column(String)  # TODO
-    filename = mapped_column(String)
+    filename = mapped_column(String, nullable=False)
     upload_time = mapped_column(DateTime)
     finish_time = mapped_column(DateTime)
-    status = mapped_column(String)
-    user_id = mapped_column(ForeignKey("user.id"))
+    status = mapped_column(sqlalchemy.Enum(RequestStatusEnum))  # TODO - does not work as expected
+    user_id = mapped_column(Integer, ForeignKey("user.id"))
     user: Mapped["User"] = relationship(back_populates="uploads")
 
 
-engine = create_engine(
-    "sqlite:///C:\\Users\\shake\\Desktop\\College\\4th Year\\Semester B\\Excellenteam\\python\\Ex\\final-exercise-shakedva\\db\\example.db")
-# engine = create_engine("sqlite:////example.db", echo=True)
-Base.metadata.create_all(bind=engine)
-Session = sessionmaker(bind=engine)
-session = Session
+class Singleton(type):
+    _instances = {}
 
-user1 = User(email="someuser@gmail.com")
-upload1 = Upload(
-    uid=str(uuid.uuid1()),  # TODO
-    filename="file_name_test",
-    upload_time=datetime.datetime.now(),
-    finish_time=datetime.datetime.now(),
-    status='done',
-    user_id=user1.id,
-    user=user1
-)
-user1.uploads.append(upload1)
-# session.add(user1)
-# session.add(upload1)
-# session.commit()
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
+class DB(metaclass=Singleton):
+
+    def __init__(self):  # TODO
+        self.engine = engine = create_engine(
+            "sqlite:///C:\\Users\\shake\\Desktop\\College\\4th Year\\Semester B\\Excellenteam\\python\\Ex\\final-exercise-shakedva\\db\\example.db"
+        )
+        Base.metadata.create_all(bind=engine)
+
+    @contextmanager
+    def session(self):
+        Session = sessionmaker(bind=self.engine)
+        with Session() as session:
+            yield session
+
+    def drop_all_rows_tables(self):
+        with self.session() as session:
+            session.query(User).delete()
+            session.query(Upload).delete()
+            session.commit()
