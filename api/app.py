@@ -5,6 +5,8 @@ from pathlib import Path
 import json
 from .request_status_enum import RequestStatusEnum
 from .utils import allowed_file, save_file
+from db.orm import DB, User, Upload
+import datetime
 
 APP_UPLOADS_DIR_KEY = "UPLOAD_FOLDER_PATH"
 APP_OUTPUTS_DIR_KEY = "OUTPUT_FOLDER_PATH"
@@ -16,6 +18,11 @@ app.config[APP_OUTPUTS_DIR_KEY] = Path(Path.cwd() / "outputs")
 NO_FILE_MSG = "No file"
 EMPTY_FILE_MSG = "file is empty"
 FILE_KEY = 'file'
+EMAIL_KEY = 'email'
+
+db = DB()
+db.drop_all_rows_tables()
+
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -29,12 +36,36 @@ def upload():
     file = request.files[FILE_KEY]
     if file.filename == '':
         return EMPTY_FILE_MSG
-
     if file and allowed_file(file.filename):
         file_name = secure_filename(file.filename)
         uid = str(uuid.uuid1())
-        save_file(file, file_name, uid, app.config[APP_UPLOADS_DIR_KEY])
+        insert_upload(uid, file_name, request.form.get(EMAIL_KEY))
+        # save_file(file, file_name, uid, app.config[APP_UPLOADS_DIR_KEY]) #TODO
         return jsonify(uid=uid)
+
+
+def insert_upload(uid, file_name, email):
+    with db.session() as session:
+        user = None
+        if email:
+            # fetch the user from the db if exists
+            user = session.query(User).filter(User.email == email).first()
+            if not user:
+                user = User(email=email)
+        upload = Upload(
+            uid=uid,
+            filename=file_name,
+            upload_time=datetime.datetime.now(),
+            status='pending',
+            user_id=user.id if user else None,
+            user=user
+        )
+        if user:
+            user.uploads.append(upload)
+            session.add(user)
+        else:
+            session.add(upload)
+        session.commit()
 
 
 @app.route('/uid/<uid>', methods=['GET'])

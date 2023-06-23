@@ -13,17 +13,19 @@ class Client:
         """
         self.url = url
 
-    def upload(self, file_path: str) -> str:
+    def upload(self, file_path: str, email=None) -> str:
         """
         Make a request to upload a file to the app.
         :param file_path: to a pptx file to upload.
+        :param email: email address of the user.
         :return: UID from the response.
         :raise Exception: status code - when the response contains error code.
         """
         with open(file_path, 'rb') as f:
             response = requests.post(
                 f"{self.url}/upload",
-                files={'file': f}
+                files={'file': f},
+                data={'email': email}
             )
         if response:  # True if the status code was between 200 and 400
             return response.json()['uid']
@@ -50,3 +52,15 @@ class Client:
             if status.not_found:
                 raise Exception("UID not found")
             return status
+
+
+def main():
+    client = Client('http://localhost:5000')
+    pptx_file_path = "C:\\Users\\shake\\Desktop\\College\\4th Year\\Semester B\\Excellenteam\\python\\Ex\\Tests.pptx"
+    uid = client.upload(pptx_file_path, 'shaked@example.com')
+    uid = client.upload(pptx_file_path)
+    # client.status(uid)
+
+
+if __name__ == '__main__':
+    main()
