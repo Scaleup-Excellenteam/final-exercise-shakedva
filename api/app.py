@@ -69,16 +69,29 @@ def insert_upload(uid, file_name, email):
         session.commit()
 
 
-# todo receive
-#  uid
-#  OR
-#  filename + email
+def get_upload(session, uid=None, filename=None, email=None):
+    if uid:
+        user_upload = session.query(Upload).filter(Upload.uid == uid).first()
+    elif email and filename:
+        user = session.query(User).filter(User.email == email).first()
+        # todo: check which one to return(first.. last..)
+        user_upload = session.query(Upload).filter(Upload.filename == filename, Upload.user_id == user.id).first()
+    else:
+        return None
+    return user_upload
+
+
+def get_explanation(uid: str):
+    explanation = None
+    output_file_path = next(app.config[APP_OUTPUTS_DIR_KEY].glob(f"{uid}.json"), None)
+    if output_file_path:
+        with open(output_file_path, 'r') as f:
+            explanation = json.loads(f.read())
+    return explanation
+
 
 @app.route('/status', methods=['GET'])
 def status():
-    print("in status")
-    uid = request.args.get('uid')
-    # default
     response = {
         'explanation': None,
         'uid': None,
@@ -87,51 +100,21 @@ def status():
         'status': RequestStatusEnum.NOT_FOUND
     }
     with db.session() as session:
-        upload = session.query(Upload).filter(Upload.uid == uid).first()
-        if upload:
-            output_file_path = next(app.config[APP_OUTPUTS_DIR_KEY].glob(f"{uid}.json"), None)
-            if output_file_path:
-                upload.status = RequestStatusEnum.DONE
+        user_upload = get_upload(
+            session,
+            request.args.get('uid'),
+            request.args.get('filename'),
+            request.args.get('email')
+        )
+        if user_upload:
+            response['explanation'] = get_explanation(user_upload.uid)
+            if response['explanation']:
+                user_upload.status = RequestStatusEnum.DONE
                 session.commit()
-                with open(output_file_path, 'r') as f:
-                    response['explanation'] = json.loads(f.read())
-
-            response["uid"] = upload.uid
-            response["filename"] = upload.filename
-            response["finish_time"] = upload.finish_time
-            response["status"] = upload.status
-
-    return jsonify(response)
-
-
-# todo delete
-@app.route('/uid_old/<uid>', methods=['GET'])
-def old_status(uid):
-    """
-     Handles user request to receive the status of the output.
-    :param uid: str unique id the user got when uploading a file.
-    :return: JSON with all the information about the output.
-    """
-    response = {
-        'explanation': None
-    }
-    input_dir_path = app.config[APP_UPLOADS_DIR_KEY]
-    input_file_path = next(input_dir_path.glob(f"*{uid}*.pptx"), None)
-    if not input_file_path:
-        response['status'] = RequestStatusEnum.NOT_FOUND
-    else:
-        timestamp, _, original_file_name = input_file_path.name.split('_', 2)
-        response['filename'] = original_file_name
-        response['timestamp'] = timestamp
-
-        # check if there is output file
-        output_file_path = next(app.config[APP_OUTPUTS_DIR_KEY].glob(f"*{uid}*.json"), None)
-        if output_file_path:
-            response['status'] = RequestStatusEnum.DONE
-            with open(output_file_path, 'r') as f:
-                response['explanation'] = json.loads(f.read())
-        else:
-            response['status'] = RequestStatusEnum.PENDING
+            response["uid"] = user_upload.uid
+            response["filename"] = user_upload.filename
+            response["finish_time"] = user_upload.finish_time
+            response["status"] = user_upload.status
 
     return jsonify(response)
 
