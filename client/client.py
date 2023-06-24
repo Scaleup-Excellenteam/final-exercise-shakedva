@@ -32,7 +32,7 @@ class Client:
             return response.json()['uid']
         raise Exception(response.status_code)
 
-    def status(self, uid: str) -> Status:
+    def status(self, **request_args) -> Status:
         """
         Make a request to receive the status of the output
         :param uid: str the uid received in the upload request
@@ -40,8 +40,8 @@ class Client:
         :raise Exception: when the response contained error
         """
         response = requests.get(
-            f"{self.url}/status?uid={uid}"
-            # f"{self.url}/status?filename=Tests.pptx&email=shaked@example.com"
+            f"{self.url}/status",
+            params=request_args
         )
         if response:
             response_json = response.json()
@@ -63,10 +63,8 @@ def main():
     # uid2 = client.upload(pptx_file_path)
     #
     time.sleep(10)
-    print(client.status(uid1))
-
-    # print(client.status("43d05767-12b3-11ee-971e-c0b883fc0ed2"))
-
+    print(client.status(uid=uid1))
+    print(client.status(email="shaked@example.com", filename="Tests.pptx"))
 
 
 if __name__ == '__main__':
