@@ -1,5 +1,6 @@
 import requests
 from .status import Status
+import time
 
 
 class Client:
@@ -39,14 +40,14 @@ class Client:
         :raise Exception: when the response contained error
         """
         response = requests.get(
-            f"{self.url}/uid/{uid}"
+            f"{self.url}/status?uid={uid}"
         )
         if response:
             response_json = response.json()
             status = Status(
                 response_json['status'],
                 response_json['filename'],
-                response_json['timestamp'],
+                response_json['finish_time'],
                 response_json['explanation'],
             )
             if status.not_found:
@@ -57,9 +58,14 @@ class Client:
 def main():
     client = Client('http://localhost:5000')
     pptx_file_path = "C:\\Users\\shake\\Desktop\\College\\4th Year\\Semester B\\Excellenteam\\python\\Ex\\Tests.pptx"
-    uid = client.upload(pptx_file_path, 'shaked@example.com')
-    uid = client.upload(pptx_file_path)
-    # client.status(uid)
+    # uid1 = client.upload(pptx_file_path, 'shaked@example.com')
+    # uid2 = client.upload(pptx_file_path)
+    #
+    # time.sleep(10)
+    # print(client.status(uid1))
+
+    print(client.status("43d05767-12b3-11ee-971e-c0b883fc0ed2"))
+
 
 
 if __name__ == '__main__':

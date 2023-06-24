@@ -12,17 +12,20 @@ def allowed_file(filename: str) -> bool:
     :return:
     """
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+           get_file_extension(filename).lower() in ALLOWED_EXTENSIONS
 
 
-def save_file(file: FileStorage, file_name: str, uid: str, directory_path: Path):
+def get_file_extension(filename: str) -> str:
+    return filename.rsplit('.', 1)[1]
+
+
+def save_file(file: FileStorage, filename: str, uid: str, directory_path: Path):
     """
     Saves the file in the received directory path
     :param file: FileStorage file
-    :param file_name: str file name
+    :param filename: str file name
     :param uid: str unique id
     :param directory_path: Path to directory to save the file
     """
-    data = (datetime.now().strftime('%Y-%m-%d-%H-%M-%S'), uid, file_name)
-    file_name = '_'.join(data)
-    file.save(directory_path / file_name)
+    filename = uid + get_file_extension(filename)
+    file.save(directory_path / filename)

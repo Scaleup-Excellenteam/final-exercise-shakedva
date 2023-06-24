@@ -21,7 +21,7 @@ FILE_KEY = 'file'
 EMAIL_KEY = 'email'
 
 db = DB()
-db.drop_all_rows_tables()
+# db.drop_all_rows_tables()
 
 
 @app.route('/upload', methods=['POST'])
@@ -40,8 +40,9 @@ def upload():
         file_name = secure_filename(file.filename)
         uid = str(uuid.uuid1())
         insert_upload(uid, file_name, request.form.get(EMAIL_KEY))
-        # save_file(file, file_name, uid, app.config[APP_UPLOADS_DIR_KEY]) #TODO
+        save_file(file, file_name, uid, app.config[APP_UPLOADS_DIR_KEY])
         return jsonify(uid=uid)
+    return jsonify(uid=0)
 
 
 def insert_upload(uid, file_name, email):
@@ -68,8 +69,44 @@ def insert_upload(uid, file_name, email):
         session.commit()
 
 
-@app.route('/uid/<uid>', methods=['GET'])
-def status(uid):
+# todo receive
+#  uid
+#  OR
+#  filename + email
+
+@app.route('/status', methods=['GET'])
+def status():
+    print("in status")
+    uid = request.args.get('uid')
+    # default
+    response = {
+        'explanation': None,
+        'uid': None,
+        'filename': None,
+        'finish_time': None,
+        'status': RequestStatusEnum.NOT_FOUND
+    }
+    with db.session() as session:
+        upload = session.query(Upload).filter(Upload.uid == uid).first()
+        if upload:
+            output_file_path = next(app.config[APP_OUTPUTS_DIR_KEY].glob(f"{uid}.json"), None)
+            if output_file_path:
+                upload.status = RequestStatusEnum.DONE
+                session.commit()
+                with open(output_file_path, 'r') as f:
+                    response['explanation'] = json.loads(f.read())
+
+            response["uid"] = upload.uid
+            response["filename"] = upload.filename
+            response["finish_time"] = upload.finish_time
+            response["status"] = upload.status
+
+    return jsonify(response)
+
+
+# todo delete
+@app.route('/uid_old/<uid>', methods=['GET'])
+def old_status(uid):
     """
      Handles user request to receive the status of the output.
     :param uid: str unique id the user got when uploading a file.
