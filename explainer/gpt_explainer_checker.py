@@ -9,7 +9,6 @@ from api.request_status_enum import RequestStatusEnum
 from api.utils import get_file_extension
 import datetime
 
-
 db = DB()
 logging.basicConfig(
     filename='gpt_explainer_checker.log',
@@ -28,9 +27,6 @@ class GptExplainerChecker:
     """
     Call gpt explainer to process new files in a given directory.
     """
-
-    def __init__(self):
-        self.processed_requests = set()
 
     def run(self, input_dir: str, output_dir: str):
         """
@@ -57,9 +53,9 @@ class GptExplainerChecker:
             time.sleep(SLEEP_DURATION)
 
 
-if __name__ == '__main__':
+def main():
     """
-    Runs the gpt checker server with input and output directories. 
+    Runs the gpt checker server with input and output directories.
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -77,3 +73,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     checker = GptExplainerChecker()
     checker.run(args.input_dir, args.output_dir)
+
+
+if __name__ == '__main__':
+    main()

@@ -1,21 +1,16 @@
-import uuid
-import time
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import ForeignKey
-from sqlalchemy import CheckConstraint
 from api.request_status_enum import RequestStatusEnum
 import sqlalchemy  # import Enum
-from sqlalchemy import delete
 from contextlib import contextmanager
 
 from typing import List
 from sqlalchemy import Integer, String, UUID, DateTime
 from sqlalchemy import create_engine
-import datetime
 
 
 class Base(DeclarativeBase):
@@ -25,7 +20,7 @@ class Base(DeclarativeBase):
 class User(Base):
     __tablename__ = "user"
     id = mapped_column(Integer, primary_key=True)
-    email = mapped_column(String, nullable=False)  # todo: , unique=True
+    email = mapped_column(String, nullable=False, unique=True)
 
     uploads: Mapped[List["Upload"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
@@ -37,7 +32,6 @@ class User(Base):
 
 class Upload(Base):
     __tablename__ = "upload"
-
     id = mapped_column(Integer, primary_key=True)
     uid = mapped_column(String)  # TODO
     filename = mapped_column(String, nullable=False)
@@ -49,6 +43,9 @@ class Upload(Base):
 
 
 class Singleton(type):
+    """
+    Taken from https://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
+    """
     _instances = {}
 
     def __call__(cls, *args, **kwargs):
@@ -58,8 +55,13 @@ class Singleton(type):
 
 
 class DB(metaclass=Singleton):
-
+    """
+    Database singleton class to manage the operations.
+    """
     def __init__(self):  # TODO
+        """
+        Initialize the database
+        """
         self.engine = engine = create_engine(
             "sqlite:///C:\\Users\\shake\\Desktop\\College\\4th Year\\Semester B\\Excellenteam\\python\\Ex\\final-exercise-shakedva\\db\\example.db"
         )
@@ -67,11 +69,18 @@ class DB(metaclass=Singleton):
 
     @contextmanager
     def session(self):
+        """
+        Context manager for creating a database session.
+        :yield: the session
+        """
         Session = sessionmaker(bind=self.engine)
         with Session() as session:
             yield session
 
     def drop_all_rows_tables(self):
+        """
+        Drops all rows from User and Upload tables.
+        """
         with self.session() as session:
             session.query(User).delete()
             session.query(Upload).delete()

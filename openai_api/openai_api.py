@@ -11,7 +11,7 @@ class OpenaiApi:
     """
     PROMPT = "Please summarize the key points from slide number {slide_index} titled '{file_title}' simply: {" \
              "slide_text} "
-    REQUEST_WAIT_TIME = 60
+    REQUEST_WAIT_TIME = 60  # due to openai rate limit per minute
     DEFAULT_MODEL = "gpt-3.5-turbo"
 
     @classmethod
