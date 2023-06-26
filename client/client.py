@@ -60,11 +60,21 @@ def main():
     client = Client('http://localhost:5000')
     pptx_file_path = "C:\\Users\\shake\\Desktop\\College\\4th Year\\Semester B\\Excellenteam\\python\\Ex\\Tests.pptx"
     uid1 = client.upload(pptx_file_path, 'shaked@example.com')
-    # uid2 = client.upload(pptx_file_path)
-    #
-    time.sleep(10)
-    print(client.status(uid=uid1))
-    print(client.status(email="shaked@example.com", filename="Tests.pptx"))
+
+    # pptx_file_path = "C:\\Users\\shake\\Desktop\\asyncio-intro.pptx"
+    # client.upload(pptx_file_path, 'shaked@example2.com')
+
+    # while True:
+    #     time.sleep(10)
+    #     try:
+    #         # status = client.status(uid=uid1)
+    #         status = client.status(email='shaked@example2.com', filename='asyncio-intro.pptx')
+    #         if not status:
+    #             raise Exception("Not done yet.")
+    #         else:
+    #             break
+    #     except Exception as e:
+    #         print(e)
 
 
 if __name__ == '__main__':

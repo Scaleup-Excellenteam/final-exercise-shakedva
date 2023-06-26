@@ -4,10 +4,16 @@ from pathlib import Path
 from .gpt_pptx_explainer import GptPptxExplainer
 import asyncio
 import logging
+from db.orm import DB, Upload
+from api.request_status_enum import RequestStatusEnum
+from api.utils import get_file_extension
+import datetime
 
+
+db = DB()
 logging.basicConfig(
-    filename='../gpt_explainer_checker.log',
-    level=logging.DEBUG,
+    filename='gpt_explainer_checker.log',
+    level=logging.INFO,
     format='%(asctime)s %(name)s %(message)s',
     datefmt='%d-%m-%Y %H:%M:%S'
 )
@@ -28,7 +34,7 @@ class GptExplainerChecker:
 
     def run(self, input_dir: str, output_dir: str):
         """
-        Scans an input directory every few seconds and sends the files who weren't processed yet to the
+        Every few seconds, check for pending uploads in the database, save them in an output directory and calls the
         GptPptxExplainer.
         :param input_dir: str path to scan for new files.
         :param output_dir: str path to save new gpt explained files.
@@ -36,12 +42,18 @@ class GptExplainerChecker:
         input_dir_path = Path(input_dir)
         output_dir_path = Path(output_dir)
         while True:
-            for file in input_dir_path.iterdir():
-                if file.stem not in self.processed_requests:
-                    logger.debug(FOUND_REQUEST.format(file.stem))
-                    self.processed_requests.add(file.stem)
-                    asyncio.run(GptPptxExplainer.explain(file.absolute(), output_dir_path))
-                    logger.debug(PROCESSED.format(file.stem))
+            with db.session() as session:
+                pending_uploads = session.query(Upload).filter(Upload.status == RequestStatusEnum.PENDING)
+                for upload in pending_uploads:
+                    logger.info(FOUND_REQUEST.format(upload.filename))
+                    upload.status = RequestStatusEnum.PROCESSED
+                    session.commit()
+                    filename = upload.uid + '.' + get_file_extension(upload.filename)
+                    asyncio.run(GptPptxExplainer.explain(Path(input_dir_path / filename), output_dir_path.absolute()))
+                    upload.status = RequestStatusEnum.DONE
+                    upload.finish_time = datetime.datetime.now()
+                    session.commit()
+                    logger.info(PROCESSED.format(upload.filename))
             time.sleep(SLEEP_DURATION)
 
 

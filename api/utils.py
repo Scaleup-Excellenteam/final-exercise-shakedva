@@ -1,4 +1,3 @@
-from datetime import datetime
 from pathlib import Path
 
 from werkzeug.datastructures.file_storage import FileStorage
@@ -27,5 +26,5 @@ def save_file(file: FileStorage, filename: str, uid: str, directory_path: Path):
     :param uid: str unique id
     :param directory_path: Path to directory to save the file
     """
-    filename = uid + get_file_extension(filename)
+    filename = uid + '.' + get_file_extension(filename)
     file.save(directory_path / filename)
