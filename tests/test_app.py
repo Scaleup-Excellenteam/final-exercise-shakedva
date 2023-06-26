@@ -43,9 +43,9 @@ def test_system(server_process, checker_process):
     client = Client(URL)
     uid = client.upload(str(Path(Path.cwd() / FILE_NAME)))
     time.sleep(3)
-    s = client.status(uid)
+    s = client.status(uid=uid)
     assert s.status == RequestStatusEnum.PENDING
     time.sleep(SLEEP_DURATION)
-    s = client.status(uid)
+    s = client.status(uid=uid)
     assert s.is_done
 
