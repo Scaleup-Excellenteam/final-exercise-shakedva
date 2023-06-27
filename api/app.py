@@ -4,6 +4,7 @@ import uuid
 from pathlib import Path
 from .request_status_enum import RequestStatusEnum
 from .utils import allowed_file, save_file, insert_upload, get_upload, get_explanation
+from email_validate import validate
 
 APP_UPLOADS_DIR_KEY = "UPLOAD_FOLDER_PATH"
 APP_OUTPUTS_DIR_KEY = "OUTPUT_FOLDER_PATH"
@@ -33,9 +34,11 @@ def upload():
     if file and allowed_file(file.filename):
         file_name = secure_filename(file.filename)
         uid = str(uuid.uuid1())
-        insert_upload(uid, file_name, request.form.get(EMAIL_KEY))
-        save_file(file, file_name, uid, app.config[APP_UPLOADS_DIR_KEY])
-        return jsonify(uid=uid)
+        email_address = request.form.get(EMAIL_KEY)
+        if not email_address or validate(email_address=email_address):
+            insert_upload(uid, file_name, email_address)
+            save_file(file, file_name, uid, app.config[APP_UPLOADS_DIR_KEY])
+            return jsonify(uid=uid)
     return jsonify(uid=0)
 
 
