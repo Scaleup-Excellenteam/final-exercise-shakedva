@@ -1,0 +1,11 @@
+.idea/
+*.json
+__pycache__/
+.venv
+uploads/
+outputs/
+*.log
+.pytest_cache/
+GPT-explainer-1.md
+GPT-explainer-2-2.md
+*.db
